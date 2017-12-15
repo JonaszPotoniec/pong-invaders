@@ -1,7 +1,12 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <unistd.h>
 #include "ball.h"
+#include "ball.cpp"
 #include "pong.h"
+#include "pong.cpp"
+#include "enemy.h"
+#include "enemy.cpp"
 
 //variables
 const int resolutionX = 1280;
@@ -10,28 +15,34 @@ SDL_Window* window = NULL;
 SDL_Renderer* windowRenderer = NULL;
 bool run = true;
 SDL_Event evnt;
+int ticks;
 
 //functions
 bool init();
 void close();
 void input();
 
-//objects
-ball ballo(resolutionX, resolutionY);
-pong pongo(resolutionY);
-
 int main( int argc, char* args[] ){
   run = init();
+
+  //objects
+  pong pongo(resolutionY);
+  ball ballo(resolutionX, resolutionY, windowRenderer);
+
   while(run){
     input(); //handle input
 
     //move things
-    ballo.move(pongo.getPos(), resolutionX);
+    ballo.move(pongo.getPos(), resolutionX, SDL_GetTicks() - ticks);
+    pongo.move();
+
+    ticks = SDL_GetTicks();
 
     //render things
-    ballo.render();
-    pongo.render();
-
+    SDL_SetRenderDrawColor( windowRenderer, 230, 235, 190, 0xFF );
+    SDL_RenderClear( windowRenderer );
+    ballo.render(windowRenderer);
+    pongo.render(windowRenderer);
     SDL_RenderPresent( windowRenderer );
   }
 }
