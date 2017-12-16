@@ -16,11 +16,15 @@ SDL_Renderer* windowRenderer = NULL;
 bool run = true;
 SDL_Event evnt;
 int ticks;
+int enemyTicks = 0;
+SDL_Texture* enemyTexture;
+bool enemyDirection = 1; // 1=right 0=left
 
 //functions
 bool init();
 void close();
 void input();
+void moveEnemies(enemy enemyo[][3]);
 
 int main( int argc, char* args[] ){
   run = init();
@@ -28,6 +32,13 @@ int main( int argc, char* args[] ){
   //objects
   pong pongo(resolutionY);
   ball ballo(resolutionX, resolutionY, windowRenderer);
+  enemy enemyo[10][3];
+
+  for(int x = 0; x < 10; x++)
+    for(int y = 0; y < 3; y++){
+        enemyo[x][y].setTexture(enemyTexture);
+        enemyo[x][y].setPosition(x * enemyo[x][y].getSizeX() * 1.3, (resolutionY/10) + (y * enemyo[x][y].getSizeY() * 1.3));
+    }
 
   while(run){
     input(); //handle input
@@ -35,6 +46,10 @@ int main( int argc, char* args[] ){
     //move things
     ballo.move(pongo.getPos(), resolutionX, SDL_GetTicks() - ticks);
     pongo.move();
+    if(SDL_GetTicks() - enemyTicks > 1000){
+      moveEnemies(enemyo);
+      enemyTicks = SDL_GetTicks();
+    }
 
     ticks = SDL_GetTicks();
 
@@ -43,6 +58,9 @@ int main( int argc, char* args[] ){
     SDL_RenderClear( windowRenderer );
     ballo.render(windowRenderer);
     pongo.render(windowRenderer);
+    for(int x = 0; x < 10; x++)
+      for(int y = 0; y < 3; y++)
+        enemyo[x][y].render(windowRenderer);
     SDL_RenderPresent( windowRenderer );
   }
 }
@@ -84,6 +102,18 @@ bool init(){
     return 0;
   }
 
+  SDL_Surface* loadedSurface = IMG_Load("media/enemy.png");
+  if(loadedSurface == NULL)
+    printf("Unable to load image. SDL_Error: %s\n", SDL_GetError());
+  else{
+    enemyTexture = SDL_CreateTextureFromSurface(windowRenderer, loadedSurface);
+      if(enemyTexture == NULL)
+        printf("Unable to convert image to texture. SDL_Error: %s\n", SDL_GetError());
+      else{
+        SDL_FreeSurface(loadedSurface);
+      }
+  }
+
   return 1;
 }
 
@@ -92,4 +122,72 @@ bool init(){
 void close(){
   SDL_DestroyWindow(window);
   SDL_Quit();
+}
+
+void moveEnemies(enemy enemyo[][3]){
+
+  printf("moving enemies %s\n", enemyDirection ? "Right" : "Left");
+
+  int skipRowes = 0;
+  bool moveY = 0;
+
+  if( !enemyDirection ){ //left
+    for(int x = 0; x < 10; x++){
+      int notAlive;
+      for(int y = 0; y < 3; y++){
+          if(!enemyo[x][y].isAlive())
+            notAlive++;
+      }
+      if(notAlive == 3)
+        skipRowes++;
+      else
+        x = 10;
+
+      if(
+        (enemyo[0+skipRowes][0].isAlive() && enemyo[0+skipRowes][0].getPositionX() < enemyo[0+skipRowes][0].getSizeX()) ||
+        (enemyo[0+skipRowes][1].isAlive() && enemyo[0+skipRowes][1].getPositionX() < enemyo[0+skipRowes][1].getSizeX()) ||
+        (enemyo[0+skipRowes][2].isAlive() && enemyo[0+skipRowes][2].getPositionX() < enemyo[0+skipRowes][2].getSizeX())
+        ){
+          moveY = 1;
+          enemyDirection = 1;
+      }
+    }
+  }else{ //right
+    for(int x = 9; x >= 0; x--){
+      int notAlive;
+      for(int y = 0; y < 3; y++){
+          if(!enemyo[x][y].isAlive())
+            notAlive++;
+      }
+      if(notAlive == 3)
+        skipRowes++;
+      else
+        x = -1;
+    }
+
+      if(
+        (enemyo[9-skipRowes][0].isAlive() && enemyo[9-skipRowes][0].getPositionX() > resolutionX - enemyo[9-skipRowes][0].getSizeX()) ||
+        (enemyo[9-skipRowes][1].isAlive() && enemyo[9-skipRowes][1].getPositionX() > resolutionX - enemyo[9-skipRowes][1].getSizeX()) ||
+        (enemyo[9-skipRowes][2].isAlive() && enemyo[9-skipRowes][2].getPositionX() > resolutionX - enemyo[9-skipRowes][2].getSizeX())
+        ){
+          moveY = 1;
+          enemyDirection = 0;
+      }
+  }
+
+  if(moveY)
+    for(int x = 0; x < 10; x++)
+      for(int y = 0; y < 3; y++)
+        enemyo[x][y].moveBy(0, enemyo[x][y].getSizeY());
+  else
+    if(enemyDirection)
+      for(int x = 0; x < 10; x++)
+        for(int y = 0; y < 3; y++)
+          enemyo[x][y].moveBy(enemyo[x][y].getSizeX()/2);
+    else
+      for(int x = 0; x < 10; x++)
+        for(int y = 0; y < 3; y++)
+          enemyo[x][y].moveBy(enemyo[x][y].getSizeX()/-2);
+
+  return;
 }
