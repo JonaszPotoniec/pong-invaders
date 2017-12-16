@@ -5,12 +5,12 @@
 
 ball::ball(int resX, int resY, SDL_Renderer* windowRenderer){
   positionX = resX/2;
-  positionY = resY/2;
+  positionY = resY/4;
   ballTexture = loadTexture(windowRenderer);
 }
 
 //pong Pos = x, y, width
-void ball::move(int* pongPos, int resX, int deltaTime){
+void ball::move(int* pongPos, int resX, int resY, int deltaTime){
   if(directionX){
     if(positionX <= resX){
       positionX += accelerationX * deltaTime;
@@ -28,7 +28,7 @@ void ball::move(int* pongPos, int resX, int deltaTime){
   }
 
   if(positionY > pongPos[1] && directionY){
-    if(positionX > pongPos[0] && positionX > (pongPos[0] + pongPos[3])){
+    if(positionX > pongPos[0] && positionX < (pongPos[0] + pongPos[2])){
       directionY = false;
       accelerationY *= -1;
     }
@@ -40,6 +40,11 @@ void ball::move(int* pongPos, int resX, int deltaTime){
   }
 
   positionY += accelerationY * deltaTime;
+
+  if(positionY > resY){
+    positionX = resX/2;
+    positionY = resY/4;
+  }
 }
 
 bool ball::render(SDL_Renderer* windowRenderer){
@@ -63,4 +68,23 @@ SDL_Texture* ball::loadTexture(SDL_Renderer* windowRenderer){
       }
   }
   return newTexture;
+}
+
+void ball::changeDirections(bool x, bool y){
+  if(x){
+    directionX = !directionX;
+    accelerationX *= -1;
+  }
+  if(y){
+    directionY = !directionY;
+    accelerationY *= -1;
+  }
+}
+
+int ball::getPositionX(){
+  return positionX;
+}
+
+int ball::getPositionY(){
+  return positionY;
 }

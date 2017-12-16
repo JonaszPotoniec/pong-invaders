@@ -8,8 +8,11 @@ class ball{
 
 public:
   ball(int resX, int resY, SDL_Renderer* windowRenderer);
-  void move(int* pongPos, int resX, int deltaTime);
+  void move(int* pongPos, int resX, int resY, int deltaTime);
   bool render(SDL_Renderer* windowRenderer);
+  void changeDirections(bool x = 0, bool y = 0);
+  int getPositionX();
+  int getPositionY();
 
 private:
   SDL_Texture* loadTexture(SDL_Renderer* windowRenderer);

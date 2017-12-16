@@ -19,12 +19,14 @@ int ticks;
 int enemyTicks = 0;
 SDL_Texture* enemyTexture;
 bool enemyDirection = 1; // 1=right 0=left
+bool won = 0;
 
 //functions
 bool init();
 void close();
 void input();
 void moveEnemies(enemy enemyo[][3]);
+void killEnemies(enemy enemyo[][3], ball ballo);
 
 int main( int argc, char* args[] ){
   run = init();
@@ -44,13 +46,15 @@ int main( int argc, char* args[] ){
     input(); //handle input
 
     //move things
-    ballo.move(pongo.getPos(), resolutionX, SDL_GetTicks() - ticks);
+    ballo.move(pongo.getPos(), resolutionX, resolutionY, SDL_GetTicks() - ticks);
     pongo.move();
     if(SDL_GetTicks() - enemyTicks > 1000){
       moveEnemies(enemyo);
       enemyTicks = SDL_GetTicks();
     }
 
+    //logic
+    killEnemies(enemyo, ballo);
     ticks = SDL_GetTicks();
 
     //render things
@@ -60,7 +64,8 @@ int main( int argc, char* args[] ){
     pongo.render(windowRenderer);
     for(int x = 0; x < 10; x++)
       for(int y = 0; y < 3; y++)
-        enemyo[x][y].render(windowRenderer);
+        if(enemyo[x][y].isAlive())
+          enemyo[x][y].render(windowRenderer);
     SDL_RenderPresent( windowRenderer );
   }
 }
@@ -69,16 +74,8 @@ void input(){
   while(SDL_PollEvent(&evnt)){
     if(evnt.type == SDL_QUIT)
       run = false;
-    else if( evnt.type == SDL_KEYDOWN )
-      switch(evnt.key.keysym.sym){
-        case SDLK_LEFT:
-          break;
-        case SDLK_RIGHT:
-          break;
-      }
   }
 }
-
 
 bool init(){
 	//init everything
@@ -86,10 +83,7 @@ bool init(){
   		printf("Failed to initialize SDL, error: %s\n", SDL_GetError());
       return 0;
   }
-/*                             I don't need fonts for now
-	if (TTF_Init() == -1)
-		printf("Failed to initialize SDL_ttf, error: %s\n", TTF_GetError());
-*/
+
 	window = SDL_CreateWindow("Pong invaders", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, resolutionX, resolutionY, SDL_WINDOW_SHOWN/* | SDL_WINDOW_FULLSCREEN_DESKTOP*/);
 	if (window == 0){
     printf("Failed to create window, error: %s\n", SDL_GetError());
@@ -117,8 +111,6 @@ bool init(){
   return 1;
 }
 
-
-
 void close(){
   SDL_DestroyWindow(window);
   SDL_Quit();
@@ -126,14 +118,12 @@ void close(){
 
 void moveEnemies(enemy enemyo[][3]){
 
-  printf("moving enemies %s\n", enemyDirection ? "Right" : "Left");
-
   int skipRowes = 0;
   bool moveY = 0;
 
   if( !enemyDirection ){ //left
     for(int x = 0; x < 10; x++){
-      int notAlive;
+      int notAlive = 0;
       for(int y = 0; y < 3; y++){
           if(!enemyo[x][y].isAlive())
             notAlive++;
@@ -154,7 +144,7 @@ void moveEnemies(enemy enemyo[][3]){
     }
   }else{ //right
     for(int x = 9; x >= 0; x--){
-      int notAlive;
+      int notAlive = 0;
       for(int y = 0; y < 3; y++){
           if(!enemyo[x][y].isAlive())
             notAlive++;
@@ -189,5 +179,22 @@ void moveEnemies(enemy enemyo[][3]){
         for(int y = 0; y < 3; y++)
           enemyo[x][y].moveBy(enemyo[x][y].getSizeX()/-2);
 
+  if(skipRowes == 10){
+    run = 0;
+    won = 1;
+  }
+
   return;
+}
+
+void killEnemies(enemy enemyo[][3], ball ballo){
+  for(int x = 0; x < 10; x++)
+      if(ballo.getPositionX() > enemyo[x][0].getPositionX() && ballo.getPositionX() < enemyo[x][0].getPositionX() + enemyo[x][0].getSizeX())
+        for(int y = 0; y < 3; y++)
+          if(ballo.getPositionY() > enemyo[x][y].getPositionY() && ballo.getPositionY() < enemyo[x][y].getPositionY() + enemyo[x][y].getSizeY()){
+            if(enemyo[x][y].isAlive()){
+              ballo.changeDirections(1, 1);
+              enemyo[x][y].kill();
+            }
+          }
 }

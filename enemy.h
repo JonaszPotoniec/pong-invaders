@@ -11,6 +11,7 @@ public:
   void setTexture(SDL_Texture* newTexture);
   bool render(SDL_Renderer* windowRenderer);
   bool isAlive();
+  void kill();
   int getPositionX();
   int getPositionY();
   int getSizeX();

@@ -29,6 +29,10 @@ bool enemy::isAlive(){
   return alive;
 }
 
+void enemy::kill(){
+  alive = 0;
+}
+
 int enemy::getPositionX(){
   return positionX;
 }
