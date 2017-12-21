@@ -15,7 +15,7 @@ It's a game which was sold on hundrends of thousands arcades.
 ###### I didn't but I managed to do it anyway.  ######
    
    
-Here is gif from early state of development as a proof:  
+Here is a gif from early state of development as a proof:  
 ![](http://joni99.cba.pl/pong-invaders.gif)  
    
    
